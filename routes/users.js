@@ -1,9 +1,16 @@
-var express = require('express');
-var router = express.Router();
+const express = require('express');
+const router = express.Router();
 
-/* GET users listing. */
-router.get('/', function(req, res, next) {
-  res.send('respond with a resource');
-});
+//import controller
 
-module.exports = router;
+const userController = require('../controllers/user.controller');
+
+//define API routes
+router.post("/register", userController.createUser);
+router.post("/login", userController.loginUser);
+// router.get("/getTodos", todoController.getTodo);
+// router.get("/getTodosById/:id", todoController.getTodoById);
+// router.put("/updateTodoById/:id", todoController.updateTodoById);
+// router.delete("/deleteTodoById/:id", todoController.deleteTodoById);
+
+module.exports = router; 
