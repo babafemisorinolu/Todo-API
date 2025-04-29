@@ -1,12 +1,26 @@
 //import the model
 const User = require("../models/user.model");
 require("dotenv").config();
+const jwt = require('jsonwebtoken');
+const transporter = require("../config/email_config"); 
+
 
 const bcrypt = require("bcrypt");
 const saltRounds = 10;
-const myPlaintextPassword = process.env.myPlaintextPassword || "1234567";
-const someOtherPlaintextPassword =
-  process.env.someOtherPlaintextPassword || "hdjfjfjfjjf";
+
+
+async function sendEmail(SUBJECT, BODY, TO){
+  // send mail with defined transport object
+  const info = await transporter.sendMail({
+    from: process.env.EMAIL_USER, // sender address
+    to: TO, // list of receivers
+    subject: SUBJECT, // Subject line
+    text: BODY, // plain text body
+    // html: "<b>Hello world?</b>", // html body
+  });
+
+  console.log("Message sent: %s", info.messageId);
+}
 
 //create route handler
 exports.createUser = async (req, res) => {
@@ -25,6 +39,9 @@ exports.createUser = async (req, res) => {
 
       const response = User.create({ firstname, lastname, email, hash })
         .then((user) => {
+
+          sendEmail("Welcome to our App", `Hello ${firstname}, Your account has been created`, email);
+
           //send a json response with a success flag
           res.status(200).json({
             success: true,
@@ -58,7 +75,7 @@ exports.loginUser = async (req, res) => {
     const { email, password } = req.body;
 
     //fetch users from database by email
-    const response = await Todo.findOne({ email: email });
+    const response = await User.findOne({ email: email });
 
     if (!response) {
       return res.status(200).json({
@@ -72,9 +89,13 @@ exports.loginUser = async (req, res) => {
       bcrypt.compare(password, response.password).then(function (result) {
         // result == true
         if (result) {
+
+        const token = jwt.sign(response._id.toString(), process.env.JWT_SECRET);
+
           res.status(200).json({
             success: true,
             data: response,
+            token: token,
             message: "Login successful",
           });
         } else {
